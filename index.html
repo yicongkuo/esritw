@@ -185,7 +185,7 @@
 	<script>
 		var divs = [
 			{ id: "#newsWall",   groupId: "fd77bb84eb19489b9caecdebcfe5c2a0" },
-			{ id: "#courseWall", groupId: "fd77bb84eb19489b9caecdebcfe5c2a0" }
+			{ id: "#courseWall", groupId: "3ce7c30abf2648f7936e1fcadb9ee36c" }
 		];
 
 		divs.forEach(function (div) {
@@ -217,7 +217,7 @@
 				// 參數設定請參考 REST API - Group Search 文件
 				// https://developers.arcgis.com/rest/users-groups-and-items/group-search.htm
 				f: "json",
-				num: 100,
+				num: 3,
 				sortField: sortField,
 				sortOrder: sortOrder
 			}, null, "json");
@@ -229,12 +229,12 @@
 		}
 
 		function creatCardElementHTML (item) {
-			var snippet = !(item.snippet)? "": item.snippet;
+			var snippet = !(item.description)? item.snippet : item.description;
 
 			return "<div class='ui blue card column'><div class='ui image'><a href='" + 
-					item.url + "'><img src='" + getThumbnailUrl(item.id, item.thumbnail) + 
+					item.url + "' target='_blank'><img src='" + getThumbnailUrl(item.id, item.thumbnail) + 
 					"' alt='' /></a></div><div class='content'><div class='header'><a href='" +
-					item.url + "'>" + item.title + "</a></div><br><div class='descript'>" + 
+					item.url + "' target='_blank'>" + item.title + "</a></div><br><div class='descript'>" + 
 					snippet + "</div></div><div class='extra content'>" + createTagsHTML(item.tags) + 
 					"</div></div>";
 		}
@@ -257,7 +257,7 @@
 		</div>
 	</div>		
 
-	<div class="doubling stackable ui grid" style="position: relative;">
+	<div class="doubling stackable ui container">
 		<div id="newsWall" class="ui centered cards"></div>
 	</div>
 	<!-- end news -->
@@ -273,7 +273,7 @@
 		</div>
 	</div>		
 
-	<div class="doubling stackable ui grid" style="position: relative;">
+	<div class="doubling stackable ui container" style="position: relative;">
 		<div id="courseWall" class="ui centered cards"></div>
 	</div>
 	<!-- end course -->
