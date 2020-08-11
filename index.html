@@ -231,12 +231,12 @@
 		function creatCardElementHTML (item) {
 			var snippet = !(item.description)? item.snippet : item.description;
 
-			return "<div class='four wide column'><div class='ui blue card'><div class='ui image'><a href='" + 
+			return "<div class='ui blue card'><div class='ui image'><a href='" + 
 					item.url + "' target='_blank'><img src='" + getThumbnailUrl(item.id, item.thumbnail) + 
 					"' alt='' /></a></div><div class='content'><div class='header'><a href='" +
 					item.url + "' target='_blank'>" + item.title + "</a></div><br><div class='descript'>" + 
 					snippet + "</div></div><div class='extra content'>" + createTagsHTML(item.tags) + 
-					"</div></div></div>";
+					"</div></div>";
 		}
 
 		function createTagsHTML (tags) {
