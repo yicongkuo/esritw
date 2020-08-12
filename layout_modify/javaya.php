@@ -222,9 +222,7 @@ defined( '_JEXEC' ) or die( 'Restricted access' );
 			</div>
 		</div>		
 
-		<div class="doubling stackable ui container" style="position: relative;">
-			<div id="newsWall" class="ui centered cards"></div>
-		</div>
+		<div id="newsWall" class="ui centered cards"></div>
 		<!-- end news -->
 	
 		<br><br>
@@ -238,9 +236,7 @@ defined( '_JEXEC' ) or die( 'Restricted access' );
 			</div>
 		</div>		
 
-		<div class="doubling stackable ui grid" style="position: relative;">
-			<div id="courseWall" class="ui centered cards"></div>
-		</div>
+		<div id="courseWall" class="ui centered cards"></div>
 		<!-- end course -->
 		
 		<!-- start content -->		
