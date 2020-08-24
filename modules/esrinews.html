@@ -1,0 +1,115 @@
+<!-- start esri news -->
+<div class="ui two column centered padded grid">
+	<div class="column">
+		<h3 class="ui blue horizontal divider header">最新消息</h3>	
+	</div>
+</div>		
+
+<div id="newsWall" class="ui centered cards"></div>
+<!-- end news -->
+
+<br><br>
+
+<!-- start course -->
+<div class="ui two column centered padded grid">
+	<div class="column">
+		<h3 class="ui blue horizontal divider header">
+			上手課程
+		</h3>	
+	</div>
+</div>		
+
+<div id="courseWall" class="ui centered cards"></div>
+<!-- end course -->
+
+
+<!-- custom script -->
+<script>
+    $(document).ready(function(){ 
+        // 產生卡片牆內容
+        var walls = [
+            { 
+                divId: "#newsWall",
+                groupId: "fd77bb84eb19489b9caecdebcfe5c2a0",
+                sortField: "added", // added, created, modified, title ...
+                sortOrder: "desc", // asc, desc
+                num: 8 // 群組項目回傳數量
+            },
+            { 
+                divId: "#courseWall", 
+                groupId: "3ce7c30abf2648f7936e1fcadb9ee36c",
+                sortField: "added",
+                sortOrder: "asc",
+                num: 4
+            }
+        ];
+
+        walls.forEach(function (wall) {
+            createWallItems(wall);
+        });
+
+        /**************************************
+            functions
+         **************************************/
+        function createWallItems (wallItem) {
+            getGroupItems(wallItem).then(function (response){
+                // ArcGIS 群組項目
+                var groupItems = response.results;
+                
+                groupItems.forEach(function (groupItem){
+                    $(wallItem.divId).append( creatCardElementHTML(groupItem) );
+                });
+            });     
+        }
+
+        function getGroupItems (wallItem) {
+            // groupId, sortField, sortOrder, portalUrl
+            // 檢查是否存在連線到私有雲
+            var portalUrl = !(wallItem.portalUrl) ? 
+                                "https://www.arcgis.com" : wallItem.portalUrl;
+
+            // 檢查參數是否存在
+            var sortField = !(wallItem.sortField) ? "added" : wallItem.sortField; // added, created ...
+            var sortOrder = !(wallItem.sortOrder) ? "desc": wallItem.sortOrder; // asc, desc
+            var num = !(wallItem.num) ? 4: wallItem.num; // 回傳數量
+
+            // 取得服務端點網址
+            var endpoint = portalUrl + "/sharing/rest/content/groups/" + 
+                           wallItem.groupId + "/search";
+
+            return $.get(endpoint, {
+                // 參數設定請參考 REST API - Group Search 文件
+                // https://developers.arcgis.com/rest/users-groups-and-items/group-content-search.htm
+                f: "json",
+                num: num,
+                sortField: sortField,
+                sortOrder: sortOrder
+            }, null, "json");
+        }
+
+        function getThumbnailUrl (id, thumbnail) {
+            return "https://www.arcgis.com/sharing/rest/content/items/" + 
+                   id + "/info/" + thumbnail + "?w=400";
+        }
+
+        function creatCardElementHTML (groupItem) {
+            var snippet = !(groupItem.description)? groupItem.snippet : groupItem.description;
+
+            return "<div class='ui blue card'><div class='ui image'><a href='" + 
+                    groupItem.url + "' target='_blank'><img src='" + getThumbnailUrl(groupItem.id, groupItem.thumbnail) + 
+                    "' alt='' /></a></div><div class='content'><div class='header'><a href='" +
+                    groupItem.url + "' target='_blank'>" + groupItem.title + "</a></div><br><div class='descript'>" + 
+                    snippet + "</div></div><div class='extra content'>" + createTagsHTML(groupItem.tags) + 
+                    "</div></div>";
+        }
+
+        function createTagsHTML (tags) {
+            var result = "";
+
+            tags.forEach(function (tag){
+                result += "<a class='ui small label'>" + tag + "</a>";
+            });
+            return result;
+        }
+    });
+</script>
