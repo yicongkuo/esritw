@@ -12,8 +12,6 @@ $(document).ready(function(){
 	// 定義並初始化元件
 	var UI = {
 		adds: {
-			"input"  : $('#addsInput'),
-			"button" : $('#addsButton'),
 			"message": $('#addsMsg .ui.positive.message'),
 			"error"  : $('#addsMsg .ui.negative.message')
 		},
@@ -37,8 +35,10 @@ $(document).ready(function(){
 		定義事件 
 	 ****************/
 	for (action in UI) {
-		UI[action].input.on('change', inputOnChange);
-		UI[action].button.on('click', buttonOnClick);
+		if (UI[action].input)
+			UI[action].input.on('change', inputOnChange);
+		if (UI[action].button)
+			UI[action].button.on('click', buttonOnClick);
 	}
 	
 	/****************
@@ -55,19 +55,17 @@ $(document).ready(function(){
 		action = this.id.replace('Button', '');
 
 		// 清除對應動作的訊息內容
-		EmptyMessage(UI[action].message);
-		EmptyMessage(UI[action].error);
+		actions = ['adds', 'updates', 'deletes'];
+		EmptyAllMessage(actions);
 
 		// 執行對應動作
-		if (action === 'adds')
-			_addsButtonOnClick('adds');
 		if (action === 'updates')
 			_updatesButtonOnClick('updates');
 		if (action === 'deletes')
 			_deletesButtonOnClick('deletes');
 	}
 
-	function _addsButtonOnClick (action){
+	function _updatesButtonOnClick (action){
 		var itemIds = config.ids[action];
 		
 		if (!itemIds) {
@@ -75,54 +73,187 @@ $(document).ready(function(){
 			return;
 		}
 
-		// 故事地圖實體項目內容
-		// 奇數項存meta 偶數項存data
-		var items = new Array(); 
+		queryExistItems(itemIds)
+		  .then(classifyIds.bind({ requestIds: itemIds }))
+		  .then(queryItems)
+		  .then(buildIndex);
+	}
+	
+	function _deletesButtonOnClick (action){
+		var itemIds = config.ids[action];
 		
-		itemIds.split(",").forEach( function (itemId){
-			// 移除空白字元
-			var itemId = itemId.replace(/\s/g, ''); 
-			
-			// 取得每一筆故事地圖「說明資料」與「實體資料」
-			items.push( $.get(_itemMetaUrl(itemId), {f: 'json'}, null, "json") );			
-			items.push( $.get(_itemDataUrl(itemId), {f: 'json'}, null, "json") );
-		});
-
-		Promise.all(items)
-		   .then( createIndex.bind({ action: action }) )
-		   .then( 
-		   		writeIndex.bind({ action: action }),
-		   		errorHandler.bind({ messageNode: UI[action].error })
-		   	)
-		   .then( writeIndexSuccess.bind({ action: action }) );
-	}
-	
-	function _updatesButtonOnClick (){
-		if (!updateId) {
-			alert("請輸入 Storymap ID");
+		if (!itemIds) {
+			errorHandler("請輸入 Storymap ID", UI[action].error);
 			return;
 		}
 
-	}
-	
-	function _deletesButtonOnClick (evt){
-		if (!deleteId) {
-			alert("請輸入 Storymap ID");
-			return;
-		}
+		var bindData = {
+			action: "deletes",
+			messageNode: UI["deletes"].error
+		};
+
+		queryExistItems(itemIds)
+		  .then(getDeleteObjectIds)
+		  .then(buildDeleteIndex.bind(bindData))
+  	      .then( 
+	      	writeIndex.bind(bindData), 
+	      	errorHandler.bind(bindData) 
+	      )
+	      .then( writeIndexSuccess.bind(bindData) );
 
 	}
 
 	/****************
 		主功能 
 	 ****************/
+	function queryExistItems (itemIds) {
+		var sql = "", counts = itemIds.split(",").length;
+
+		// 產生查詢條件
+		itemIds.split(",").forEach( function (itemId, index){
+			// 移除空白字元
+			var itemId = itemId.replace(/\s/g, '');
+			// 產生where自
+			if (index <  (counts-1) )
+				sql += "itemId='" + itemId + "' OR ";
+			if (index === (counts-1) )
+				sql += "itemId='" + itemId + "'" ;
+		});
+
+		return $.ajax({
+			type: "GET",
+			url: config.indexUrl + '/query',
+			data: {
+				f: 'json',
+				where: sql,
+				outFields: "OBJECTID, itemId",
+				returnGeometry: false
+			},
+			dataType: 'json'
+		});
+	}
+
+	function getDeleteObjectIds (response) {
+		var ids = new Object();
+
+		ids.deletes = response.features.map(function (item) { 
+			return item.attributes.itemId;
+		});
+		
+		ids.deletesObjIds = response.features.map(function (item) { 
+			return item.attributes.OBJECTID;
+		});
+
+		return new Promise(function (resolve, reject) {
+			resolve(ids);
+			reject('取得要刪除的Id步驟錯誤');
+		});
+	}
+
+	function classifyIds (response) {
+		var ids = new Object();
+		
+		ids.updates = response.features.map(function (item) { 
+			return item.attributes.itemId;
+		});
+		
+		ids.updatesObjIds = response.features.map(function (item) { 
+			return item.attributes.OBJECTID;
+		});
+		
+		ids.adds = new Array();
+		this.requestIds.split(',').map(function (id) { 
+			var requestId = id.replace(/\s/g, '');
+			if ( !ids.updates.includes(requestId) )
+				ids.adds.push(requestId);
+		});
+		
+		return new Promise(function (resolve, reject) {
+			resolve(ids);
+			reject('分類Id錯誤');
+		});
+	} 
+	
+	function queryItems (ids) {
+		var items = new Object();
+
+		// 故事地圖實體項目內容
+		// 奇數項存meta 偶數項存data
+		items.adds = new Array();
+		items.updates = new Array();
+		
+		if (ids.adds.length > 0) {
+			ids.adds.forEach(function (itemId) {
+				// 取得每一筆故事地圖「說明資料」與「實體資料」
+				items.adds.push( $.get(_itemMetaUrl(itemId), {f: 'json'}, null, "json") );			
+				items.adds.push( $.get(_itemDataUrl(itemId), {f: 'json'}, null, "json") );
+			});
+		}
+
+		if (ids.updates.length > 0) {
+			ids.updates.forEach(function (itemId) {
+				// 取得每一筆故事地圖「說明資料」與「實體資料」
+				items.updates.push( $.get(_itemMetaUrl(itemId), {f: 'json'}, null, "json") );
+				items.updates.push( $.get(_itemDataUrl(itemId), {f: 'json'}, null, "json") );
+			});
+		}
+
+		return new Promise(function (resolve, reject) {
+			resolve({ ids: ids, items: items});
+		});
+	}
+
+	function buildDeleteIndex (ids) {
+		// ids.deletes
+		// ids.deletesObjIds
+		this.ids = ids;
+
+		return new Promise(function (resolve, reject) {
+			resolve(ids.deletesObjIds);
+		});
+	}
+
+	function buildIndex (data) {
+		var ids = data.ids;
+		var	updatesItems = data.items.updates;
+		var	addsItems = data.items.adds;
+
+		// add items
+		if (addsItems.length > 0)
+			buildIndexProcess(addsItems, "adds", ids);
+		
+		// update items
+		if (updatesItems.length > 0)
+			buildIndexProcess(updatesItems, "updates", ids);	
+	}
+
+	function buildIndexProcess (items, action, ids) {
+		var bindData = new Object;
+			bindData.action = action;
+			bindData.messageNode =  UI[action].error;
+			bindData.ids = ids;
+
+		Promise.all(items)
+	      .then( createIndex.bind(bindData) )
+	      .then( 
+	      	writeIndex.bind(bindData), 
+	      	errorHandler.bind(bindData) 
+	      )
+	      .then( writeIndexSuccess.bind(bindData) );
+	}
+
 	function createIndex (response) {
 		// 取得由哪個按鈕所引發的事件
 		var action = this.action;
 
 		var indexPackage = new Array();
-		var metaset = response.filter(function (meta, index) { if( index%2 === 0) return meta}),
-			dataset = response.filter(function (meta, index) { if( index%2 === 1) return meta});
+		var metaset = response.filter(function (meta, index) { 
+			if( index%2 === 0) 
+				return meta; 
+		});
+		var dataset = response.filter(function (data, index) { 
+			if( index%2 === 1) return data; 
+		});
 
 		metaset.forEach(function (meta, i) {
 			if (meta.error) {
@@ -152,6 +283,12 @@ $(document).ready(function(){
 			indexPackage.push(indexData);
 		}.bind(this));
 
+		if (action === 'updates') {
+			this.ids.updatesObjIds.forEach(function (ObjId, idx) {
+				indexPackage[idx].attributes["OBJECTID"] = ObjId;
+			});
+		}
+
 		return new Promise(function (resolve, reject) { 
 			resolve(indexPackage);
 			reject('索引資料建立錯誤!');
@@ -161,8 +298,6 @@ $(document).ready(function(){
 	function writeIndex (indexPackage) {
 		var endPoint = config.indexUrl + '/applyEdits';
 		var data = null;
-
-		console.log(indexPackage);
 
 		if (this.action === 'adds')
 			data = { adds: JSON.stringify(indexPackage), f: "json" };
@@ -201,18 +336,23 @@ $(document).ready(function(){
 			messages = response.updateResults;
 		if (action === 'deletes')
 			messages = response.deleteResults; 
-		
+
 		messages.forEach(function (message, idx){
 			if(message.error){
 				errorHandler(message.error.description, UI[action].error);
 				return;
 			}
 
-			if (idx < message.length-1 )
-				info = info + message.objectId + ", ";
-			else
-				info = info + message.objectId;
-		});
+			if (idx < messages.length-1 ) {
+				info = info + message.objectId + 
+					   ": " + this.ids[action][idx] + "<br/>";
+			}
+			else {
+				info = info + message.objectId + 
+					   ": " + this.ids[action][idx];
+			}
+			
+		}.bind(this));
 
 		if (info) {
 			insertMessage(info, UI[action].message);	
@@ -242,6 +382,13 @@ $(document).ready(function(){
 		messageNode.removeClass('hidden');
 	}
 
+	function EmptyAllMessage (actions) {
+		actions.forEach(function (action) {
+			EmptyMessage(UI[action].message);
+			EmptyMessage(UI[action].error);
+		});
+	}
+
 	function EmptyMessage (messageNode) {
 		messageNode.find($('p')).empty();
 		messageNode.hide();
@@ -250,6 +397,7 @@ $(document).ready(function(){
 
 	function insertMessage (message, messageNode) {
 		// 寫入訊息
+		message += ' ';
 		messageNode.find($('p')).append(message);
 
 		// 顯示訊息
