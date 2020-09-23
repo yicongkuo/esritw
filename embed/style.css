@@ -26,6 +26,10 @@ iframe {
     border: solid 0px white !important;
 }
 
+#small-menu .header.item {
+    margin: 0 auto !important;
+}
+
 @media only screen and (max-width: 760px) {
     #large-menu {
         display: none !important;
