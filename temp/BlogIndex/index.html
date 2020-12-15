@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>文章索引建立</title>
+	
+	<!-- load google font -->
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700&display=swap" rel="stylesheet">
+
+	<!-- load semantic ui -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+
+	<!-- load md5 -->
+	<!-- <script src="lib/md5.min.js"></script> -->
+	<!-- load custom lib -->
+	<script src="./main.js"></script>
+	<link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+	<div class="ui container">
+		<!-- Menu -->
+		<div class="ui blue huge borderless inverted menu">
+			<div class="header item">Post Index Creator</div>
+			<a href="" class="item">建立</a>
+			<a href="" class="item"><i class="sync icon"></i>更新</a>
+			<a href="" class="item"><i class="minus icon"></i>刪除</a>
+
+			<div class="right menu">
+				<a href="" class="item"><i class="history icon"></i>紀錄</a>
+			</div>
+		</div>
+		
+		<!-- 索引操作畫面 -->
+		<div class="ui form">
+			<!-- add & update index -->
+			<h3 class="ui header"><i class="add circle icon"></i>更新索引</h3>
+			<div class="three fields">				
+				<div class="field">
+					<div  class="ui left icon input">
+						<input id="updatesInput" type="text" placeholder="輸入 StoryMap ID ...">
+						<i class="heading icon"></i>
+					</div>
+				</div>
+
+				<div class="field">
+					<button id="updatesButton" class="ui blue button">開始更新</button>
+				</div>
+			</div>
+			<div id="addsMsg" class="field">
+				<div class="ui positive message">
+					<i class="close icon"></i><div class="header">索引建立成功</div>
+					<p></p>
+				</div>
+				<div class="ui negative message">
+					<i class="close icon"></i><div class="header">索引建立失敗</div>
+					<p></p>
+				</div>
+			</div>
+			<div id="updatesMsg" class="field">
+				<div class="ui positive message">
+					<i class="close icon"></i><div class="header">索引建立成功</div>
+					<p></p>
+				</div>
+				<div class="ui negative message">
+					<i class="close icon"></i><div class="header">索引建立失敗</div>
+					<p></p>
+				</div>
+			</div>
+
+			<!-- delete index -->
+			<h3 class="ui header"><i class="add circle icon"></i>刪除索引</h3>
+			<div class="three fields">				
+				<div class="field">
+					<div  class="ui left icon input">
+						<input id="deletesInput" type="text" placeholder="輸入StoryMap ID...">
+						<i class="heading icon"></i>
+					</div>
+				</div>
+
+				<div class="field">
+					<button id="deletesButton" class="ui blue button">開始刪除</button>
+				</div>
+			</div>
+			<div id="deletesMsg" class="field">
+				<div class="ui positive message">
+					<i class="close icon"></i><div class="header">索引刪除成功</div>
+					<p></p>
+				</div>
+				<div class="ui negative message">
+					<i class="close icon"></i><div class="header">索引刪除失敗</div>
+					<p></p>
+				</div>
+			</div>
+
+		</div><!-- End of Form -->
+
+	
+	</div><!-- End of Container -->
+
+</body>
+</html>
